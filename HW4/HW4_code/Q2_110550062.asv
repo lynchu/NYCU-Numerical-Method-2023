@@ -1,0 +1,71 @@
+% Define the function and data points
+syms t;
+tf = t + sin(t)/3;
+tfd = diff(tf, t);
+fdx = 1+cos(t)/3;
+true_a = eval(subs(tfd, t, 0.72));
+true_b = eval(subs(tfd, t, 1.33));
+true_c = eval(subs(tfd, t, 0.50));
+
+f = @(x) x + sin(x)/3;
+x = [0.3, 0.5, 0.7, 0.9, 1.1, 1.3, 1.5];
+fx = f(x);
+
+% Construct the difference table
+n = length(x);
+D = zeros(n, n);
+D(:, 1) = fx;
+for j = 2:n
+  for i = 1:n-j+1
+    D(i,j) = (D(i+1,j-1) - D(i,j-1))/(x(i+j-1) - x(i));
+  end
+end
+disp(D)
+
+% Use the difference table to find f'(0.72) from a cubic polynomial
+est = Inf;
+dif = Inf;
+start = 1;
+t = 0.72;
+for idx = 1:4
+    tmp = D(idx, 1)+D(idx, 2)*( (t-x(idx)) + (t-x(idx+1)))+D(idx, 3)*( (t-x(idx))*(t-x(idx+1)) + (t-x(idx+1))*(t-x(idx+2)) + (t-x(idx+2))*(t-x(idx)));
+    tmpd = abs(true_a - tmp);
+    if(tmpd<dif)
+        dif = tmpd;
+        est = tmp;
+        start = idx;
+    end
+end
+fprintf("From a cubic polynomial start from x = %f, 𝑓′(0.72) = %.4f\n", x(start), est);
+
+% Use the difference table to find f'(1.33) from a quadratic polynomial
+est = Inf;
+dif = Inf;
+start = 1;
+t = 1.33;
+for idx = 1:5
+    tmp = D(idx,1)+D(idx,2)*((t-x(idx))+(t-x(idx+1)));
+    tmpd = abs(true_b - tmp);
+    if(tmpd<dif)
+        dif = tmpd;
+        est = tmp;
+        start = idx;
+    end
+end
+fprintf("From a quadratic polynomial start from x = %f, 𝑓′(1.33) = %.4f\n", x(start), est);
+
+% Use the difference table to find f'(0.50) from a 4th degree polynomial
+est = Inf;
+dif = Inf;
+start = 1;
+t = 0.5;
+for idx = 1:3
+    tmp = f2(idx)+f(idx,2)*( (t-x(idx)) + (t-x(idx+1)))+D(idx,3)*( (t-x(idx))*(t-x(idx+1)) + (t-x(idx+1))*(t-x(idx+2)) + (t-x(idx+2))*(t-x(idx)));
+    tmpd = abs(true_c - tmp);
+    if(tmpd<dif)
+        dif = tmpd;
+        est = tmp;
+        start = idx;
+    end
+end
+fprintf("From a 4th degree polynomial start from x = %f, 𝑓′(0.5) = %.4f\n",  x(start), est);
